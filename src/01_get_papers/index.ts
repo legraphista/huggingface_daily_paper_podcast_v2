@@ -17,8 +17,11 @@ export async function downloadPapers() {
             state.setPaper(paper.id, paper);
         }
 
-
         const p = Paper.fromId(paper.id);
+        if (!p) {
+            console.error(`Paper ${paper.id} not found`);
+            continue;
+        }
 
         if (!p.getState('downloadedPDF')) {
             console.log(`Downloading PDF for ${paper.id} from ${paper.pdfUrl}`);
