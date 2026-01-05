@@ -1,0 +1,48 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run 01 get papers",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tsx",
+      "args": ["${workspaceFolder}/src/01_get_papers/cli.ts"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },{
+      "name": "Run 02 make podcast",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tsx",
+      "args": ["${workspaceFolder}/src/02_make_podcast/cli.ts"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Run Chatterbox Turbo Demo",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/chatterbox-turbo-demo/app.py",
+      "cwd": "${workspaceFolder}/chatterbox-turbo-demo",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/chatterbox-turbo-demo/.venv/bin/python",
+      "env": {
+        "VIRTUAL_ENV": "${workspaceFolder}/chatterbox-turbo-demo/.venv",
+        "PATH": "${workspaceFolder}/chatterbox-turbo-demo/.venv/bin:${env:PATH}"
+      }
+    },
+    {
+      "name": "Run 03 publish podcast",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tsx",
+      "args": ["${workspaceFolder}/src/03_publish_podcast/cli.ts"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}
+

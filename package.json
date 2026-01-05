@@ -1,0 +1,21 @@
+{
+  "name": "podcast",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@google/genai": "^1.34.0",
+    "@gradio/client": "^2.0.1",
+    "@types/node": "^25.0.3",
+    "dotenv": "^17.2.3",
+    "puppeteer": "^24.34.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "simple-eta": "^3.0.2",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}

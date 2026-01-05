@@ -1,0 +1,3 @@
+[submodule "chatterbox-turbo-demo"]
+	path = chatterbox-turbo-demo
+	url = git@github.com:legraphista/chatterbox-turbo-demo.git

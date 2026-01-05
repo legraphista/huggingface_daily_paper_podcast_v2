@@ -1,0 +1,2 @@
+astralplane_04_leadbeater_0242.flac - hi_fi_tts_v0\hi_fi_tts_v0\audio\6097_clean\9575
+celebratedcrimesv1_13_dumas_0154.flac - hi_fi_tts_v0\hi_fi_tts_v0\audio\9017_clean\11216
