@@ -20,17 +20,22 @@ export let browser: Browser = null;
 //     await browser.setCookie(cookie);
 // }
 
-export async function reloadBrowser(headless: boolean = env.HEADLESS) : Promise<Browser> {
+export async function reloadBrowser(headless: boolean = env.HEADLESS): Promise<Browser> {
     await browser?.close();
 
-    return browser = await puppeteer.default.launch({
-        // executablePath: '/usr/bin/chromium-browser',
-        protocolTimeout: 15 * 60 * 1000,
-        headless,
-        userDataDir: 'data/.browser_data',
-        ignoreDefaultArgs: ['--enable-automation', '--disable-extensions', '--disable-default-apps', '--disable-component-extensions-with-background-pages'],
-        args: ['--no-sandbox', '--disable-setuid-sandbox'] // Add these arguments for Linux environments
-    });
+    try {
+        return browser = await puppeteer.default.launch({
+            // executablePath: '/usr/bin/chromium-browser',
+            protocolTimeout: 15 * 60 * 1000,
+            headless,
+            userDataDir: 'data/.browser_data',
+            ignoreDefaultArgs: ['--enable-automation', '--disable-extensions', '--disable-default-apps', '--disable-component-extensions-with-background-pages'],
+            args: ['--no-sandbox', '--disable-setuid-sandbox'] // Add these arguments for Linux environments
+        });
+    } catch (e) {
+        console.error('error reloading browser, check if you need to set HEADLESS=1');
+        throw e;
+    }
 }
 
 browser = await reloadBrowser();

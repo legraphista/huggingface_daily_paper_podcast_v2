@@ -54,7 +54,9 @@ export class StateData {
 
 
     getPaper(id: string) {
-        return new Paper(this.state.papers[id]);
+        const paperData = this.state.papers[id];
+        if (!paperData) return undefined;
+        return new Paper(paperData);
     }
 
     setPaper(id: string, paper: PaperData | Paper) {
@@ -76,7 +78,8 @@ export class StateData {
         return Object
             .entries(this.state.paper_states)
             .filter(([id, paperState]) => predicate(paperState))
-            .map(([id, paperState]) => this.getPaper(id));
+            .map(([id]) => this.getPaper(id))
+            .filter((paper): paper is Paper => !!paper);
     }
 
     findByState(predicate: (paperState: PaperState) => boolean): Paper | undefined {

@@ -9,10 +9,12 @@ export async function getPapersForDay(date?: PaperDate): Promise<PaperData[]> {
         console.log(`Getting papers for ${date ?? 'today'}`);
 
         try {
-            await page.goto(date
+            const url = date
                 ? `https://huggingface.co/papers?date=${date}`
-                : 'https://huggingface.co/papers'
-            );
+                : 'https://huggingface.co/papers';
+
+            console.log(`Navigating to ${url}`);
+            await page.goto(url);
         } catch (e) {
             console.error('nagivation didn\'t finish');
             console.error(e);
@@ -25,7 +27,7 @@ export async function getPapersForDay(date?: PaperDate): Promise<PaperData[]> {
                 console.log('found daily papers link, page is good');
             } else {
                 console.log('no daily papers link found, page is bad');
-                throw new Error('no daily papers link found, page is bad');
+                throw new Error('no daily papers link found, page is bad: ' + page.url());
             }
         }
 
