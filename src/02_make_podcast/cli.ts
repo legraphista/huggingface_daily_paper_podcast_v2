@@ -52,8 +52,8 @@ if (forcePaperId) {
     papersToProcess = state.listByState(paperState => !paperState.processedPodcast);
 }
 
-for (let i = 0; i < papersToProcess.length; i++) {
-    const paper = papersToProcess[i];
+for (let paperI = 0; paperI < papersToProcess.length; paperI++) {
+    const paper = papersToProcess[paperI];
 
     const scriptPath = paper.scriptLocation();
     const pdfPath = paper.pdfLocation();
@@ -69,12 +69,12 @@ for (let i = 0; i < papersToProcess.length; i++) {
 
     let audioFiles: string[] = [];
 
-    for (let i = 0; i < script.length; i++) {
-        const line = script[i];
-        const audioPath = paper.audioLocation(`${i.toString().padStart(5, '0')}-${line.voice}.wav`);
+    for (let voiceI = 0; voiceI < script.length; voiceI++) {
+        const line = script[voiceI];
+        const audioPath = paper.audioLocation(`${voiceI.toString().padStart(5, '0')}-${line.voice}.wav`);
         if (!existsSync(audioPath)) {
             const voiceBuffer = line.voice === 'stefan' ? stefanVoiceBuffer : raduVoiceBuffer;
-            console.log('Generating voice for text ...', `[${line.voice}]`, line.text);
+            console.log(`P: ${paperI+1}/${papersToProcess.length} V: ${voiceI+1}/${script.length} Generating voice for text ...`, `[${line.voice}]`, line.text);
             await retry(() => generateVoice(line.text, voiceBuffer, audioPath));
         }
         audioFiles.push(audioPath);
