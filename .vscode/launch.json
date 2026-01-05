@@ -22,7 +22,7 @@
     },
     {
       "name": "Run Chatterbox Turbo Demo",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/chatterbox-turbo-demo/app.py",
       "cwd": "${workspaceFolder}/chatterbox-turbo-demo",
@@ -30,7 +30,8 @@
       "python": "${workspaceFolder}/chatterbox-turbo-demo/.venv/bin/python",
       "env": {
         "VIRTUAL_ENV": "${workspaceFolder}/chatterbox-turbo-demo/.venv",
-        "PATH": "${workspaceFolder}/chatterbox-turbo-demo/.venv/bin:${env:PATH}"
+        "PATH": "${workspaceFolder}/chatterbox-turbo-demo/.venv/bin:${env:PATH}",
+        "CUDA_VISIBLE_DEVICES": "5"
       }
     },
     {
