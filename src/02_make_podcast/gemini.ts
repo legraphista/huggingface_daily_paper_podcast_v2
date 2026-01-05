@@ -82,9 +82,16 @@ Output format:
 
     // Remove any [] tags that are not in availableTags and not [S1] or [S2]
     const allowedTags = new Set([...availableTags, '[S1]', '[S2]']);
-    script = script.replace(/\[[^\]]+\]/g, (match) => 
+    script = script
+    .replace(/\[[^\]]+\]/g, (match) => 
         allowedTags.has(match) ? match : ''
-    );
+    )
+    // Replace em-dashes or spaced hyphens between words with commas
+    .replace(/\s*—\s*/g, ', ')
+    .replace(/\s+–\s+/g, ', ')
+    .replace(/\s+-\s+/g, ', ')
+    // Remove LaTeX $...$ notation but keep the content inside (no spaces after opening or before closing $)
+    .replace(/\$(\S[^$]*\S|\S)\$/g, '$1');
 
     return script.split('\n').map(x => x.trim()).filter(line => line).map(x => {
         const voice = x.startsWith('[S1]') ? 'stefan' as const : 'radu' as const;

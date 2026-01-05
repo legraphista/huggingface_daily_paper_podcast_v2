@@ -5,6 +5,7 @@ import { existsSync } from "fs";
 import { generateVoice as generateVoice, raduVoiceBuffer, stefanVoiceBuffer } from "./voices.js";
 import { mergeAudioFiles } from "./ffmpeg.js";
 import { state, Paper } from "../state.js";
+import { retry } from "../helpers/retry.js";
 
 // Parse arguments
 const args = process.argv.slice(2);
@@ -60,7 +61,7 @@ for (let i = 0; i < papersToProcess.length; i++) {
     let script: { voice: 'stefan' | 'radu', text: string }[] = [];
     if (!existsSync(scriptPath)) {
         console.log('Generating script for paper ...', paper.id, pdfPath);
-        script = await makePodcastScript(pdfPath);
+        script = await retry(() => makePodcastScript(pdfPath));
         await writeFile(scriptPath, JSON.stringify(script, null, 2));
     } else {
         script = JSON.parse(await readFile(scriptPath, 'utf8'));
@@ -74,7 +75,7 @@ for (let i = 0; i < papersToProcess.length; i++) {
         if (!existsSync(audioPath)) {
             const voiceBuffer = line.voice === 'stefan' ? stefanVoiceBuffer : raduVoiceBuffer;
             console.log('Generating voice for text ...', `[${line.voice}]`, line.text);
-            await generateVoice(line.text, voiceBuffer, audioPath);
+            await retry(() => generateVoice(line.text, voiceBuffer, audioPath));
         }
         audioFiles.push(audioPath);
     }
