@@ -37,48 +37,56 @@ export type State = {
 const STATE_FILE = 'data/state.json';
 
 export class StateData {
-    state: State;
-
-    constructor() {
-        this.state = this.load();
+    private load(): State {
+        const data = readFileSync(STATE_FILE, 'utf8');
+        return JSON.parse(data);
     }
 
-    load() {
-        const state = readFileSync(STATE_FILE, 'utf8');
-        return this.state = JSON.parse(state);
+    private save(state: State) {
+        writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
     }
 
-    save() {
-        writeFileSync(STATE_FILE, JSON.stringify(this.state, null, 2));
+    private update(updater: (state: State) => void) {
+        const state = this.load();
+        updater(state);
+        this.save(state);
     }
-
 
     getPaper(id: string) {
-        const paperData = this.state.papers[id];
+        const state = this.load();
+        const paperData = state.papers[id];
         if (!paperData) return undefined;
         return new Paper(paperData);
     }
 
     setPaper(id: string, paper: PaperData | Paper) {
-        this.state.papers[id] = paper instanceof Paper ? paper.paper : paper;
-        this.save();
+        this.update(state => {
+            state.papers[id] = paper instanceof Paper ? paper.paper : paper;
+        });
     }
 
     setPaperState(id: string, key: keyof State['paper_states'][string], value: State['paper_states'][string][typeof key]) {
-        this.state.paper_states[id] ??= {};
-        this.state.paper_states[id][key] = value;
-        this.save();
+        this.update(state => {
+            state.paper_states[id] ??= {};
+            state.paper_states[id][key] = value;
+        });
     }
 
     getPaperState(id: string, key: keyof State['paper_states'][string]) {
-        return this.state.paper_states[id]?.[key];
+        const state = this.load();
+        return state.paper_states[id]?.[key];
     }
 
     listByState(predicate: (paperState: PaperState) => boolean): Paper[] {
+        const state = this.load();
         return Object
-            .entries(this.state.paper_states)
+            .entries(state.paper_states)
             .filter(([id, paperState]) => predicate(paperState))
-            .map(([id]) => this.getPaper(id))
+            .map(([id]) => {
+                const paperData = state.papers[id];
+                if (!paperData) return undefined;
+                return new Paper(paperData);
+            })
             .filter((paper): paper is Paper => !!paper);
     }
 
