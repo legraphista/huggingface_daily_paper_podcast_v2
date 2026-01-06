@@ -1,6 +1,6 @@
 import { parseArgs } from "util";
 import { browser } from "../helpers/puppeteer.js";
-import { state } from "../state.js";
+import { PaperState, state } from "../state.js";
 import { publishToSpotify } from "./spotify.js";
 import { sleep } from "../helpers/async.js";
 
@@ -14,11 +14,17 @@ const waitSeconds = values.wait ? parseInt(values.wait, 10) : 0;
 
 let exitCode = 0;
 
+function filterPapers(paperState: PaperState) {
+    return !!paperState.processedPodcast && !paperState.publishedToSpotify;
+}
+
 try {
-    const papersToProcess = state.listByState(paperState => !!paperState.processedPodcast && !paperState.publishedToSpotify);
-    for (let i = 0; i < papersToProcess.length; i++) {
-        const paper = papersToProcess[i];
-        console.group(`Publishing to Spotify ${i + 1} of ${papersToProcess.length} (${paper.id})`);
+    while (true) {
+        const paper = state.findByState(filterPapers);
+        if (!paper) break;
+        
+        const papersUnpublished = state.countByState(filterPapers);
+        console.group(`Publishing to Spotify ${paper?.id} (left: ${papersUnpublished})`);
 
         await publishToSpotify(paper);
         paper.setState('publishedToSpotify', true);

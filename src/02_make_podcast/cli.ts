@@ -5,7 +5,7 @@ import { mkdir, readFile, writeFile, rm } from "fs/promises";
 import { existsSync } from "fs";
 import { generateVoice as generateVoice, raduVoiceBuffer, stefanVoiceBuffer } from "./voices.js";
 import { mergeAudioFiles } from "./ffmpeg.js";
-import { state, Paper } from "../state.js";
+import { state, Paper, PaperState } from "../state.js";
 import { retry } from "../helpers/retry.js";
 
 const { values } = parseArgs({
@@ -28,8 +28,55 @@ async function sleep(ms: number) {
 
 let exitCode = 0;
 
+function filterPapers(paperState: PaperState) {
+    return !!paperState.downloadedPDF && !paperState.processedPodcast;
+}
+
+async function processPaper(paper: Paper) {
+    const papersUnprocessed = state.countByState(filterPapers);
+
+    const scriptPath = paper.scriptLocation();
+    const pdfPath = paper.pdfLocation();
+
+    let script: { voice: 'stefan' | 'radu', text: string }[] = [];
+    if (!existsSync(scriptPath)) {
+        console.log('Generating script for paper ...', paper.id, pdfPath);
+        script = await retry(() => makePodcastScript(pdfPath));
+        await writeFile(scriptPath, JSON.stringify(script, null, 2));
+    } else {
+        script = JSON.parse(await readFile(scriptPath, 'utf8'));
+    }
+
+    let audioFiles: string[] = [];
+
+    for (let voiceI = 0; voiceI < script.length; voiceI++) {
+        const line = script[voiceI];
+        const audioPath = paper.audioLocation(`${voiceI.toString().padStart(5, '0')}-${line.voice}.wav`);
+        if (!existsSync(audioPath)) {
+            const voiceBuffer = line.voice === 'stefan' ? stefanVoiceBuffer : raduVoiceBuffer;
+            console.log(`P: ${paper.id}/${papersUnprocessed} V: ${voiceI + 1}/${script.length} Generating voice for text ...`, `[${line.voice}]`, line.text);
+            await retry(() => generateVoice(line.text, voiceBuffer, audioPath));
+        }
+        audioFiles.push(audioPath);
+    }
+
+    const podcastPath = paper.podcastLocation();
+    console.log('Merging audio files ...', audioFiles, podcastPath);
+    await mergeAudioFiles(audioFiles, podcastPath, 0.5);
+
+    // Clear audio files after merge (default: true)
+    if (clearAudioAfterMerge) {
+        const audioFolder = path.join(paper.locationOnDisk(), 'audio');
+        if (existsSync(audioFolder)) {
+            console.log(`Clearing audio files from ${audioFolder}...`);
+            await rm(audioFolder, { recursive: true });
+        }
+    }
+
+    paper.setState('processedPodcast', true);
+}
+
 try {
-    let papersToProcess: Paper[];
 
     if (forcePaperId) {
         const paper = state.getPaper(forcePaperId);
@@ -37,15 +84,15 @@ try {
             console.error(`Paper with id "${forcePaperId}" not found`);
             process.exit(1);
         }
-        papersToProcess = [paper];
-        
+        state.setPaperState(paper.id, 'processedPodcast', false);
+
         // Clean up old audio files for force reprocess
         const audioFolder = path.join(paper.locationOnDisk(), 'audio');
         if (existsSync(audioFolder)) {
             console.log(`Removing old audio files from ${audioFolder}...`);
             await rm(audioFolder, { recursive: true });
         }
-        
+
         // Remove old script if flag is set
         if (removeScript) {
             const scriptPath = paper.scriptLocation();
@@ -54,62 +101,26 @@ try {
                 await rm(scriptPath);
             }
         }
-        
+
         // Remove old podcast
         const podcastPath = paper.podcastLocation();
         if (existsSync(podcastPath)) {
             console.log(`Removing old podcast at ${podcastPath}...`);
             await rm(podcastPath);
         }
-        
+
         console.log(`Force reprocessing paper: ${forcePaperId}`);
+
+        await processPaper(paper);
     } else {
-        papersToProcess = state.listByState(paperState => !paperState.processedPodcast);
+        while (true) {
+            const paper = state.findByState(filterPapers);
+            if (!paper) break;
+            await processPaper(paper);
+            await sleep(1000);
+        }
     }
 
-    for (let paperI = 0; paperI < papersToProcess.length; paperI++) {
-        const paper = papersToProcess[paperI];
-
-        const scriptPath = paper.scriptLocation();
-        const pdfPath = paper.pdfLocation();
-
-        let script: { voice: 'stefan' | 'radu', text: string }[] = [];
-        if (!existsSync(scriptPath)) {
-            console.log('Generating script for paper ...', paper.id, pdfPath);
-            script = await retry(() => makePodcastScript(pdfPath));
-            await writeFile(scriptPath, JSON.stringify(script, null, 2));
-        } else {
-            script = JSON.parse(await readFile(scriptPath, 'utf8'));
-        }
-
-        let audioFiles: string[] = [];
-
-        for (let voiceI = 0; voiceI < script.length; voiceI++) {
-            const line = script[voiceI];
-            const audioPath = paper.audioLocation(`${voiceI.toString().padStart(5, '0')}-${line.voice}.wav`);
-            if (!existsSync(audioPath)) {
-                const voiceBuffer = line.voice === 'stefan' ? stefanVoiceBuffer : raduVoiceBuffer;
-                console.log(`P: ${paperI+1}/${papersToProcess.length} V: ${voiceI+1}/${script.length} Generating voice for text ...`, `[${line.voice}]`, line.text);
-                await retry(() => generateVoice(line.text, voiceBuffer, audioPath));
-            }
-            audioFiles.push(audioPath);
-        }
-
-        const podcastPath = paper.podcastLocation();    
-        console.log('Merging audio files ...', audioFiles, podcastPath);
-        await mergeAudioFiles(audioFiles, podcastPath, 0.5);
-
-        // Clear audio files after merge (default: true)
-        if (clearAudioAfterMerge) {
-            const audioFolder = path.join(paper.locationOnDisk(), 'audio');
-            if (existsSync(audioFolder)) {
-                console.log(`Clearing audio files from ${audioFolder}...`);
-                await rm(audioFolder, { recursive: true });
-            }
-        }
-
-        paper.setState('processedPodcast', true);
-    }
 } catch (error) {
     console.error("Error during podcast generation:", error);
     exitCode = 1;

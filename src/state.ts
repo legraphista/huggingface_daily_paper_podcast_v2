@@ -93,6 +93,10 @@ export class StateData {
     findByState(predicate: (paperState: PaperState) => boolean): Paper | undefined {
         return this.listByState(predicate)[0];
     }
+
+    countByState(predicate: (paperState: PaperState) => boolean) {
+        return this.listByState(predicate).length;
+    }
 }
 
 export const state = new StateData();
