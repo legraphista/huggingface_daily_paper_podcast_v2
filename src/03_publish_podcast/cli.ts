@@ -15,7 +15,7 @@ const waitSeconds = values.wait ? parseInt(values.wait, 10) : 0;
 let exitCode = 0;
 
 function filterPapers(paperState: PaperState) {
-    return !!paperState.processedPodcast && !paperState.publishedToSpotify;
+    return !!paperState.processedPodcast && !paperState.publishedToSpotify && !paperState.errored;
 }
 
 try {

@@ -53,7 +53,7 @@ ${(abstract ? abstract.trim() + '\n\n' : '')}\
 Music: Deep Blue - Synths & Percussion Version by Ben Fox
 `
 
-    await descriptionInput.type(description.trim(), { delay: 33 });
+    await descriptionInput.type(description.trim(), { delay: 50 });
 
     console.log('waiting for next button');
     const nextButton = await page.waitForSelector('button[type="submit"]');

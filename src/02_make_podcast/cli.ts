@@ -29,7 +29,7 @@ async function sleep(ms: number) {
 let exitCode = 0;
 
 function filterPapers(paperState: PaperState) {
-    return !!paperState.downloadedPDF && !paperState.processedPodcast;
+    return !!paperState.downloadedPDF && !paperState.processedPodcast && !paperState.errored;
 }
 
 async function processPaper(paper: Paper) {
@@ -116,7 +116,12 @@ try {
         while (true) {
             const paper = state.findByState(filterPapers);
             if (!paper) break;
-            await processPaper(paper);
+            try {
+                await processPaper(paper);
+            } catch (error) {
+                paper.setState('errored', true);
+                console.error(`Error processing paper ${paper.id}:`, error);
+            }
             await sleep(1000);
         }
     }

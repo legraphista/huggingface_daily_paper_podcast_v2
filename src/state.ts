@@ -20,6 +20,7 @@ export type PaperData = {
 
 
 export type PaperState = Partial<{
+    errored: boolean;
     downloadedPDF: boolean;
     processedPodcast: boolean;
     publishedToSpotify: boolean;
