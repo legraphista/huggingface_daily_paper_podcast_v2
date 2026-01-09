@@ -5,7 +5,7 @@ import { tqdm } from "../helpers/tqdm.js";
 import { Page } from "puppeteer";
 import { sleep } from "../helpers/async.js";
 
-await reloadBrowser(false);
+// await reloadBrowser(false);
 
 async function publishPodcast(page: Page, paper: Paper) {
 

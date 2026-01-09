@@ -31,7 +31,7 @@
       "env": {
         "VIRTUAL_ENV": "${workspaceFolder}/chatterbox-turbo-demo/.venv",
         "PATH": "${workspaceFolder}/chatterbox-turbo-demo/.venv/bin:${env:PATH}",
-        "CUDA_VISIBLE_DEVICES": "5"
+        "CUDA_VISIBLE_DEVICES": "0"
       }
     },
     {

@@ -20,7 +20,7 @@ export let browser: Browser = null;
 //     await browser.setCookie(cookie);
 // }
 
-export async function reloadBrowser(headless: boolean = env.HEADLESS): Promise<Browser> {
+export async function reloadBrowser(headless: boolean = env.HEADLESS, browserDataDir: string = env.BROWSER_DATA_DIR): Promise<Browser> {
     await browser?.close();
 
     try {
@@ -28,7 +28,7 @@ export async function reloadBrowser(headless: boolean = env.HEADLESS): Promise<B
             // executablePath: '/usr/bin/chromium-browser',
             protocolTimeout: 15 * 60 * 1000,
             headless,
-            userDataDir: 'data/.browser_data',
+            userDataDir: browserDataDir,
             ignoreDefaultArgs: ['--enable-automation', '--disable-extensions', '--disable-default-apps', '--disable-component-extensions-with-background-pages'],
             args: ['--no-sandbox', '--disable-setuid-sandbox'] // Add these arguments for Linux environments
         });

@@ -1,9 +1,9 @@
 import path from "path";
 import { parseArgs } from "util";
 import { makePodcastScript } from "./gemini.js";
-import { mkdir, readFile, writeFile, rm } from "fs/promises";
+import { readFile, writeFile, rm } from "fs/promises";
 import { existsSync } from "fs";
-import { generateVoice as generateVoice, raduVoiceBuffer, stefanVoiceBuffer } from "./voices.js";
+import { ChatterboxTurbo, raduVoiceBuffer, stefanVoiceBuffer } from "./voices.js";
 import { mergeAudioFiles } from "./ffmpeg.js";
 import { state, Paper, PaperState } from "../state.js";
 import { retry } from "../helpers/retry.js";
@@ -25,6 +25,8 @@ const waitSeconds = values.wait ? parseInt(values.wait, 10) : 0;
 async function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+const chatterbox = new ChatterboxTurbo();
 
 let exitCode = 0;
 
@@ -55,7 +57,7 @@ async function processPaper(paper: Paper) {
         if (!existsSync(audioPath)) {
             const voiceBuffer = line.voice === 'stefan' ? stefanVoiceBuffer : raduVoiceBuffer;
             console.log(`P: ${paper.id}/${papersUnprocessed} V: ${voiceI + 1}/${script.length} Generating voice for text ...`, `[${line.voice}]`, line.text);
-            await retry(() => generateVoice(line.text, voiceBuffer, audioPath));
+            await retry(() => chatterbox.generateVoice(line.text, voiceBuffer, audioPath));
         }
         audioFiles.push(audioPath);
     }
@@ -77,13 +79,16 @@ async function processPaper(paper: Paper) {
 }
 
 try {
-
     if (forcePaperId) {
         const paper = state.getPaper(forcePaperId);
         if (!paper || !paper.paper) {
             console.error(`Paper with id "${forcePaperId}" not found`);
             process.exit(1);
         }
+
+        // Start Chatterbox Turbo Demo - this is crucial for voice generation
+        await chatterbox.start();
+
         state.setPaperState(paper.id, 'processedPodcast', false);
 
         // Clean up old audio files for force reprocess
@@ -113,9 +118,19 @@ try {
 
         await processPaper(paper);
     } else {
-        while (true) {
-            const paper = state.findByState(filterPapers);
-            if (!paper) break;
+        // Check if there are any papers to process before starting Chatterbox
+        const firstPaper = state.findByState(filterPapers);
+        if (!firstPaper) {
+            console.log("No papers to process.");
+            process.exit(0);
+        }
+
+        // Start Chatterbox Turbo Demo - this is crucial for voice generation
+        await chatterbox.start();
+
+        // Process papers
+        let paper: Paper | undefined = firstPaper;
+        while (paper) {
             try {
                 await processPaper(paper);
             } catch (error) {
@@ -123,6 +138,7 @@ try {
                 console.error(`Error processing paper ${paper.id}:`, error);
             }
             await sleep(1000);
+            paper = state.findByState(filterPapers);
         }
     }
 
@@ -130,6 +146,9 @@ try {
     console.error("Error during podcast generation:", error);
     exitCode = 1;
 } finally {
+    // Stop Chatterbox Turbo if it was started
+    chatterbox.stop();
+
     if (waitSeconds > 0) {
         console.log(`Waiting ${waitSeconds} seconds before exit...`);
         await sleep(waitSeconds * 1000);
